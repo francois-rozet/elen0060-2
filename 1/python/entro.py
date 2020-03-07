@@ -22,33 +22,32 @@ import numpy as np
 def expectation(X, P):
 	return (X * P).sum()
 
-def information(p):
-	q = p.copy()
-	q[p == 0] = 1
-	return -np.log2(q)
+def information(P):
+	return -np.log2(P)
 
 def entropy(P_X): # 8
-	return expectation(information(P_X), P_X)
+	P = P_X[P_X != 0]
+	return expectation(information(P), P)
 
 def joint_entropy(P_XY): # 9
 	return entropy(P_XY.reshape(-1))
 
 def conditional_entropy(P_XY): # 10
 	P_Y = P_XY.sum(axis=0)
-	return expectation(information(P_XY) - information(P_Y), P_XY)
+	return joint_entropy(P_XY) - entropy(P_Y)
 
 def mutual_information(P_XY): # 11
 	P_X = P_XY.sum(axis=1)
 	return entropy(P_X) - conditional_entropy(P_XY)
 
 def cond_joint_entropy(P_XYZ): # 12
-	P_WZ = P_XYZ.reshape(-1, P_XYZ.shape[2])
-	return conditional_entropy(P_WZ)
+	P_Z = P_XYZ.sum(axis=(0, 1))
+	return joint_entropy(P_XYZ) - entropy(P_Z)
 
 def cond_mutual_information(P_XYZ): # 12
 	P_XZ = P_XYZ.sum(axis=1)
-	P_XW = P_XYZ.reshape(P_XYZ.shape[0], -1)
-	return conditional_entropy(P_XZ) - conditional_entropy(P_XW)
+	P_YZ = P_XYZ.sum(axis=0)
+	return conditional_entropy(P_XZ) + joint_entropy(P_YZ) - joint_entropy(P_XYZ)
 
 
 ########
@@ -134,6 +133,8 @@ if __name__ == '__main__':
 	print("7. Conditional mutual informations :\n", I_XY_S, I_SY_X)
 
 	# Computer-aided exercises
+
+	np.random.seed(0)
 
 	## 13. Samples
 
