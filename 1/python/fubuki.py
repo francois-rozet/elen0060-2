@@ -19,70 +19,82 @@ import numpy as np
 # Functions #
 #############
 
-def valid(i, j, grid, clues = None, row_c = None, col_c = None):
-	if clues is not None:
-		if clues[i, j] != 0 and clues[i, j] != grid[i, j]:
-			return False
+def create(row = None, column = None):
+	'''Creates a ruler that filters out invalid values for a square.'''
 
-	# (a)
-	for k in range(grid.shape[0]):
-		for l in range(grid.shape[1]):
-			if k == i and l == j:
-				break
-			elif grid[k, l] == grid[i, j]:
-				return False
+	if row is None and column is None:
+		def ruler(clues, values, index):
+			return list(values)
+	else:
+		def aux(row, values, constraint):
+			y = constraint - row.sum()
 
-		if k == i:
-			break
-
-	# (b)
-	if row_c is not None:
-		if j == grid.shape[1] - 1:
-			if grid[i].sum() != row_c[i]:
-				return False
-		elif grid[i].sum() >= row_c[i]:
-			return False
-
-	if col_c is not None:
-		if i == grid.shape[0] - 1:
-			if grid[:, j].sum() != col_c[j]:
-				return False
-		elif grid[:, j].sum() >= col_c[j]:
-			return False
-
-	return True
-
-def solve(grid, domain, clues = None, row_c = None, col_c = None):
-	n, m = grid.shape
-	solutions = []
-
-	i, j = 0, 0
-
-	while i >= 0:
-		grid[i, j] += 1
-		
-		while grid[i, j] in domain:
-			if valid(i, j, grid, clues, row_c, col_c):
-				break
+			if (row == 0).sum() == 1:
+				# sum of row equals constraint
+				return [y] if y in values else []
 			else:
-				grid[i, j] += 1
+				# sum of row is lower than constraint
+				return [x for x in values if x <= y]
 
-		if grid[i, j] not in domain:
-			grid[i, j] = 0
-			
-			if j == 0:
-				i, j = i - 1, m - 1
-			else:
-				j -= 1
-		elif i == n - 1 and j == m - 1:
-			solutions.append(grid.copy())
+		if column is None:
+			def ruler(clues, values, index):
+				return aux(clues[index[0]], values, row[index[0]])
+		elif row is None:
+			def ruler(clues, values, index):
+				return aux(clues[:, index[1]], values, column[index[1]])
 		else:
-			if j == m - 1:
-				i, j = i + 1, 0
-			else:
-				j += 1
+			def ruler(clues, values, index):
+				# successive filters
+				return aux(clues[:, index[1]], aux(clues[index[0]], values, row[index[0]]), column[index[1]])
 
-	return solutions
+	return ruler
+
+def solve(grid, domain, ruler):
+	'''Generates all solutions matching the rules for the current grid.'''
+
+	# Initialize
+	unused = set([x for x in domain if x not in grid])
+	free = set([index for (index , x) in np.ndenumerate(grid) if x == 0])
+	guesses = []
+
+	# First guess
+	guesses.append(None)
+
+	for index in free:
+		values = ruler(grid, unused, index)
+		if guesses[-1] is None or len(guesses[-1][1]) > len(values):
+			guesses[-1] = (index, values)
+
+	free.remove(guesses[-1][0])
+
+	# Until all guesses have been consumed
+	while guesses:
+		if grid[guesses[-1][0]] != 0:
+			unused.add(grid[guesses[-1][0]])
+
+		if guesses[-1][1]:
+			grid[guesses[-1][0]] = guesses[-1][1].pop()
+			unused.remove(grid[guesses[-1][0]])
+
+			# If all squares are filled
+			if not free:
+				yield grid.copy()
+				continue
+
+			# New guess
+			guesses.append(None)
+
+			for index in free:
+				values = ruler(grid, unused, index)
+				if guesses[-1] is None or len(guesses[-1][1]) > len(values):
+					guesses[-1] = (index, values)
+
+			free.remove(guesses[-1][0])
+		else:
+			# Backtrack
+			free.add(guesses[-1][0])
+			grid[guesses[-1][0]] = 0
+			guesses.pop()
 
 
 ########
@@ -90,22 +102,18 @@ def solve(grid, domain, clues = None, row_c = None, col_c = None):
 ########
 
 if __name__ == '__main__':
-	# Fubuki grid
+	# 14. Entropy of subgrid (a)
 
 	domain = range(1, 9 + 1)
 
 	clues = np.array([
-		[4, 0, 0],
-		[0, 0, 0],
-		[0, 0, 1]
+		[4, 0, 0]
 	])
+	row_constraints = np.array([14])
 
-	row_c = np.array([14, 22, 9])
-	col_c = np.array([15, 21, 9])
+	ruler = create()
 
-	# 14. Entropy of subgrid (a)
-
-	solutions = solve(np.zeros((1, 3)), domain, clues)
+	solutions = list(solve(clues, domain, ruler))
 	N = len(solutions)
 	H = np.log2(N)
 
@@ -114,7 +122,9 @@ if __name__ == '__main__':
 
 	# 15. Entropy of subgrid (a) & (b)
 
-	solutions = solve(np.zeros((1, 3)), domain, clues, row_c)
+	ruler = create(row_constraints)
+
+	solutions = list(solve(clues, domain, ruler))
 	N = len(solutions)
 	H = np.log2(N)
 
@@ -123,22 +133,24 @@ if __name__ == '__main__':
 
 	# 17. Entropy of single square (A)
 
+	clues = np.array([
+		[4, 0, 0],
+		[0, 0, 0],
+		[0, 0, 1]
+	])
+	row_constraints = np.array([14, 22, 9])
+	column_constraints = np.array([15, 21, 9])
+
+	unused = [x for x in domain if x not in clues]
+
+	ruler = create(row_constraints, column_constraints)
+
 	N = np.zeros(clues.shape)
-
-	for i in range(clues.shape[0]):
-		for j in range(clues.shape[1]):
-			if clues[i, j] == 0:
-				for x in domain:
-					if x in clues:
-						continue
-					elif x + clues[i].sum() > row_c[i]:
-						continue
-					elif x + clues[:, j].sum() > col_c[j]:
-						continue
-
-					N[i, j] += 1
-			else:
-				N[i, j] = 1
+	for index, x in np.ndenumerate(clues):
+		if x == 0:
+			N[index] = len(ruler(clues, unused, index))
+		else:
+			N[index] = 1
 
 	H = np.log2(N)
 
@@ -148,3 +160,13 @@ if __name__ == '__main__':
 	# 18. Entropy of unsolved Fubuki grid (A)
 
 	print("18. Entropy of grid :\n", H.sum())
+
+	# 19. Without assumption A
+
+	solutions = list(solve(clues, domain, create(row_constraints, column_constraints)))
+	N = len(solutions)
+	H = np.log2(N)
+
+	print("19. All solutions :\n", solutions)
+	print("19. Number of solutions :\n", N)
+	print("19. Entropy of grid :\n", H)
