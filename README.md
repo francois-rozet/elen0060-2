@@ -9,4 +9,4 @@ These projects have been developed using [Python](https://www.python.org/).
 ## Authors
 
 * **Maxime Meurisse** - [meurissemax](https://github.com/meurissemax)
-* **François Rozet** - [Donshel](https://github.com/Donshel)
+* **François Rozet** - [francois-rozet](https://github.com/francois-rozet)
