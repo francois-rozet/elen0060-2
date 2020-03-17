@@ -1,0 +1,429 @@
+\documentclass[a4paper, 12pt]{article}
+
+%%%%%%%%%%%%%%%%%%% Packages
+
+\usepackage[french, english]{babel}
+\usepackage[noheader]{packages/sleek}
+\usepackage{packages/sleek-title}
+\usepackage{packages/sleek-theorems}
+
+\usepackage{tikz}
+\usepackage{pdfpages}
+
+%%%%%%%%%%%%%%%%%%% Titlepage
+
+\logo{resources/pdf/logo-uliege.pdf}
+\institute{University of Liège}
+\title{Project 1}
+\subtitle{Information and coding theory}
+\author{
+    Maxime \textsc{Meurisse} (s161278)\\
+    François \textsc{Rozet} (s161024)\\
+}
+\context{Master in Computer Science and Engineering}
+\date{Academic year 2019-2020}
+
+%%%%%%%%%%%%%%%%%%% Others
+
+\renewcommand{\S}{\mathcal{S}}
+\newcommand{\W}{\mathcal{W}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Z}{\mathcal{Z}}
+
+%%%%%%%%%%%%%%%%%%% Document
+
+\begin{document}
+    % ----- Title page ----- %
+    \maketitle
+    
+    % ----- Content ----- %
+    \section*{Information measures}
+
+    \subsection*{Exercises by hand}
+    
+    \begin{rmk}
+        Only theoretical formulas and final results are presented in this section. All developments are detailed in appendix of this report in order to show that the application of the stated formulas does lead to the results presented.
+    \end{rmk}
+
+    \begin{enumerate}[leftmargin=*]
+        \item Since $\X$ and $\Y$ are independent random variables, their joint probability distribution is equal to the (dyadic) product of their marginal probability distributions.
+        \begin{equation}\label{eq:independence}
+            \X \perp \Y \Leftrightarrow P(\X, \Y) = P(\X) P(\Y)
+        \end{equation}
+        This yields Table \ref{tab:joint_distribution_X_Y}.
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{cc|cccc}
+                & & \multicolumn{4}{c}{$Y_j$} \\
+                & & 0 & 1 & 2 & 3 \\ \hline
+                \multirow{4}{*}{$X_i$} & 0 & 1/8 & 1/16 & 1/32 & 1/32 \\
+                & 1 & 1/8 & 1/16 & 1/32 & 1/32 \\
+                & 2 & 1/8 & 1/16 & 1/32 & 1/32 \\
+                & 3 & 1/8 & 1/16 & 1/32 & 1/32 \\
+            \end{tabular}
+            \noskipcaption{Joint probability distribution $P(\X = X_i, \Y = Y_j)$.}
+            \label{tab:joint_distribution_X_Y}
+        \end{table}
+        As the sum of $\X$ and $\Y$, $\S$ takes value in $\cbk{0, 1, 2, 3, 4, 5, 6}$. By definition of the marginal probability,
+        \begin{align*}
+            P(\S = S_i) & = \sum_{X_j, Y_k} P(\S = S_i, \X = X_j, \Y = Y_k) \\
+            & = \sum_{X_j, Y_k} P(\S = S_i | \X = X_j, \Y = Y_k) P(\X = X_j, \Y = Y_k)
+        \end{align*}
+        But $\S$ is a (deterministic) function of $\X$ and $\Y$. Therefore, $P(\S = S_i | \X = X_j, \Y = Y_k)$ is $1$ if $S_i = X_j + Y_k$ and $0$ otherwise.
+        \begin{equation}
+            P(\S = S_i) = \sum_{X_j, Y_k \mid S_i = X_j + Y_k} P(\X = X_j, \Y = Y_k)
+        \end{equation}
+        After computation by hand, we obtain Table \ref{tab:marginal_distribution_S}.
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|ccccccc}
+                $S_i$ & 0 & 1 & 2 & 3 & 4 & 5 & 6 \\ \hline
+                $P(\S = S_i)$ & 1/8 & 3/16 & 7/32 & 1/4 & 1/8 & 1/16 & 1/32 \\
+            \end{tabular}
+            \noskipcaption{Marginal probability distribution of $\S$.}
+            \label{tab:marginal_distribution_S}
+        \end{table}
+        Using the same reasoning for $\Z = 1(\X = \Y)$,
+        \begin{equation}
+            P(\Z = Z_i) = \sum_{X_j, Y_k \mid Z_i = 1(X_j = Y_k)} P(\X = X_j, \Y = Y_k)
+        \end{equation}
+        and
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|ccccccc}
+                $Z_i$ & 0 & 1 \\ \hline
+                $P(\Z = Z_i)$ & 3/4 & 1/4 \\
+            \end{tabular}
+            \noskipcaption{Marginal probability distribution of $\Z$.}
+            \label{tab:marginal_distribution_Z}
+        \end{table}
+        \item By definition, the entropy $H$ of a random variable $\X$ is the expectation of the information $h$ given by the realisation of $\X$.\footnote{From now on, for the sake of conciseness, the probability of events (realisations) of the type $\X = X_i$ will be simply denoted $P(X_i)$. For example $P(\X = X_i)$ will now be denoted $P(X_i)$.}
+        \begin{align}
+            H(\X) & = \mathbb{E}_{\X}\rbk{h(\X)} \nonumber \\
+            & = \mathbb{E}_{\X}\rbk{-\log_2 P(\X)} \nonumber \\
+            & = - \sum_{X_i} P(X_i) \log_2 P(X_i) \label{eq:entropy}
+        \end{align}
+        Replacing $\X$ by $\Y$, $\S$ and $\Z$, one obtains Table \ref{tab:marginal_entropy}.
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cccc}
+                $\cdot$ & $\X$ & $\Y$ & $\S$ & $\Z$ \\ \hline
+                $H(\cdot)$ & \num{2} & \num{1.75} & \num{2.5887} & \num{0.8113} \\
+            \end{tabular}
+            \noskipcaption{Marginal entropies of $\X$, $\Y$, $\S$ and $\Z$.}
+            \label{tab:marginal_entropy}
+        \end{table}
+        \item The joint entropy of a random variables pair $(\X, \Y)$ is (as well) the expectation of the information given by the realisation of such pair. With the same development as before,
+        \begin{align}
+            H(\X, \Y) & = - \sum_{X_i, Y_j} P(X_i, Y_j) \log_2 P(X_i, Y_j) \label{eq:joint_entropy}
+        \end{align}
+        which gives
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cccc}
+                $\cdot$ & $(\X, \Y)$ & $(\X, \S)$ & $(\Y, \Z)$ & $(\S, \Z)$ \\ \hline
+                $H(\cdot)$ & \num{3.75} & \num{3.75} & \num{2.5613} & \num{2.8789} \\
+            \end{tabular}
+            \noskipcaption{Some joint entropies.}
+            \label{tab:joint_entropy}
+        \end{table}
+        \item Following the same logic, the conditional entropy of $\X$ given $\Y$ is the expectation of the \emph{conditional} information given by the realisation of a $(\X, \Y)$ pair. 
+        \begin{align}
+            H(\X \mid \Y) & = \mathbb{E}_{\X, \Y}\rbk{h(\X \mid \Y)} \nonumber \\
+            & = \mathbb{E}_{\X, \Y} \rbk{-\log_2 P(\X \mid \Y)} \nonumber \\
+            & = \mathbb{E}_{\X, \Y} \rbk{-\log_2 \frac{P(\X, \Y)}{P(\Y)}} \nonumber \\
+            & = \mathbb{E}_{\X, \Y} \rbk{-\log_2 P(\X, \Y) + \log_2 P(\Y)} \nonumber \\
+            & = \mathbb{E}_{\X, \Y} \rbk{-\log_2 P(\X, \Y)} - \mathbb{E}_{\X, \Y} \rbk{-\log_2 P(\Y)} \nonumber \\
+            & = H(\X,\Y) - H(\Y) \label{eq:conditional_entropy}
+        \end{align}
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cccc}
+                $\cdot$ & $(\X \mid \Y)$ & $(\Z \mid \X)$ & $(\S \mid \X)$ & $(\S \mid \Z)$ \\ \hline
+                $H(\cdot)$ & \num{2.0} & \num{0.7246} & \num{1.75} & \num{2.0676} \\
+            \end{tabular}
+            \noskipcaption{Some conditional entropies.}
+            \label{tab:conditional_entropy}
+        \end{table}
+        \item Using the same development,
+        \begin{align}
+            H(\X, \Y \mid \Z) & = - \sum_{X_i, Y_j, Z_k} P(X_i, Y_j, Z_k) \log_2 P(X_i, Y_j \mid Z_k) \nonumber \\
+            & = - \sum_{X_i, Y_j, Z_k} P(X_i, Y_j, Z_k) \log_2 \frac{P(X_i, Y_j, Z_k)}{P(Z_k)} \nonumber \\
+            & = H(\X,\Y,\Z) - H(\Z) \label{eq:conditional_joint_entropy}
+        \end{align}
+        After the computation of $P(\X, \Y, \S)$, we have
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cc}
+                $\cdot$ & $(\X, \Y \mid \S)$ & $(\S, \Y \mid \X)$ \\ \hline
+                $H(\cdot)$ & \num{1.1613} & \num{1.75} \\
+            \end{tabular}
+            \noskipcaption{Some conditional joint entropies.}
+            \label{tab:conditional_joint_entropy}
+        \end{table}
+        \item The mutual information $I$ of two random variables $\X$ and $\Y$ is the expectation of the \emph{loss} of information given by $\X$ when knowing $\Y$.
+        \begin{align}
+            I(\X; \Y) & = \mathbb{E}_{\X, \Y} \rbk{h(\X) - h(\X \mid \Y)} \nonumber \\
+            & = \mathbb{E}_{\X, \Y} \rbk{h(\X)} - \mathbb{E}_{\X, \Y} \rbk{h(\X \mid \Y)} \nonumber \\
+            & = H(\X) - H(\X \mid \Y) \label{eq:mutual_information}
+        \end{align}
+        giving
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cccc}
+                $\cdot$ & $(\X; \Y)$ & $(\X; \S)$ & $(\Y; \Z)$ & $(\S; \Z)$ \\ \hline
+                $I(\cdot)$ & \num{0} & \num{0.8387} & \num{0} & \num{0.5211} \\
+            \end{tabular}
+            \noskipcaption{Some mutual information(s).}
+            \label{tab:mutual_information}
+        \end{table}
+        \item The conditional mutual information $I$ of two random variables $\X$ and $\Y$ given a third one $\Z$ is the expectation of the \emph{loss} of information given by $\X$ knowing $\Z$ when also knowing $\Y$.
+        \begin{align}
+            I(\X; \Y \mid \Z) & = \mathbb{E}_{\X, \Y, \Z} \rbk{h(\X \mid \Z) - h(\X \mid \Y, \Z)} \nonumber \\
+            & = \mathbb{E}_{\X, \Y, \Z} \rbk{h(\X \mid \Z)} - \mathbb{E}_{\X, \Y, \Z} \rbk{h(\X \mid \Y, \Z)} \nonumber \\
+            & = H(\X \mid \Z) - H(\X \mid \Y, \Z) \nonumber \\
+            & = H(\X \mid \Z) - \sbk{H(\X, \Y, \Z) - H(\Y, \Z)} \label{eq:conditional_mutual_information}
+        \end{align}
+        yielding
+        \begin{table}[H]
+            \centering
+            \begin{tabular}{c|cc}
+                $\cdot$ & $(\X; \Y \mid S)$ & $(\S; \Y \mid \X)$  \\ \hline
+                $I(\cdot)$ & \num{1.1613} & \num{1.75} \\
+            \end{tabular}
+            \noskipcaption{Some conditional mutual information(s).}
+            \label{tab:conditional_mutual_information}
+        \end{table}
+    \end{enumerate}
+    
+    \subsection*{Computer-aided exercises}
+    
+    The following functions have been implemented using the \texttt{Python} language and, more specifically, the library \texttt{numpy}. One can find them in the file \texttt{entro.py}.
+    
+    It should be noted that, since it is always possible to compute marginal and conditional probability distributions from the joint one, implemented functions \emph{only} requires the latter as argument.
+    
+    \begin{enumerate}[leftmargin=*]
+        \setcounter{enumi}{7}
+        \item As one can see in equation \eqref{eq:entropy}, the entropy can be computed solely based on the marginal probability distribution. Furthermore, one can compute such sum as the inner (dot) product of the information vector $- \log_2 P(\X)$ and the marginal probability vector $P(\X)$ which we implemented as the \texttt{entropy} function.
+        
+        More specifically, the information vector is computed as the opposite ($-$) of the \emph{element-wise} $\log_2$ of the marginal probability vector. This operation as been implemented as a function named \texttt{information}. However, sometimes the probability $p$ of an event is null. Analytically, the information of such event is not defined which causes problems numerically ($\log_2 0$ isn't defined). But, we know that 
+        $$ \lim_{p \,\to\, 0} p \log p = 0 $$
+        Therefore, the function \texttt{entropy} actually doesn't consider the null probability element of the probability vector given to him.
+        
+        Intuitively, the entropy measures the \emph{average information} conveyed by the realisation of a random variable. One could also see it as the \emph{uncertainty} or \emph{disorder} associated to a random variable.
+        
+        \item Entropy and joint entropy are essentially the \emph{same} quantities. Indeed, the joint probability of $n$ $1$-dimensional random variables is equivalent to the marginal probability of one $n$-dimensional random variable. Therefore, as \texttt{joint\_entropy} function, we \emph{reshape} the joint probability distribution matrix into a vector and then apply the \texttt{entropy} function to it.
+        $$P(\X, \Y, \ldots) \equiv P(\W) \text{ with } \W = (\X, \Y, \ldots) $$
+        
+        \begin{rmk}
+            As it has been implemented, the function \texttt{joint\_entropy} can actually take a matrix of any dimension as input. This will come handy later on.
+        \end{rmk}
+        
+        \item The function \texttt{conditional\_entropy} has been implemented to replicate the equality \eqref{eq:conditional_entropy}, \emph{i.e.}
+        $$ H(\X \mid \Y) = H(\X, \Y) - H(\Y) $$
+        Since both \texttt{joint\_entropy} and \texttt{entropy} have already been implemented, it is only necessary to compute $P(\Y)$ based on the given distribution $P(\X, \Y)$. But we know that,
+        $$ P(\X) = \sum_\Y P(\X, \Y) $$
+        which is fairly easy to compute using \texttt{numpy} matrices.
+        
+        \item The implementation of the \texttt{mutual\_information} function is based on equality \eqref{eq:mutual_information}, \emph{i.e.} the difference of the (marginal) entropy and the conditional entropy which both have been implemented before.
+        
+        Thanks to the mutual information measure, it is possible to quantify the influence of one variable on the other. Especially, if these variables are \emph{independent}, their mutual information is necessarily null, meaning that knowing one of these variables doesn't provide any information about the other one.
+        
+        \item Concerning the \texttt{cond\_joint\_entropy} function, we have implemented the equality \eqref{eq:conditional_joint_entropy} which can be computed \emph{exactly} like \texttt{conditional\_entropy}.
+
+        Concerning the \texttt{cond\_mutual\_information} function, we implemented equality \eqref{eq:conditional_mutual_information}, \emph{i.e.}
+        $$ I(\X, \Y \mid \Z) = H(\X \mid \Z) + H(\Y \mid \Z) - H(\X, \Y, \Z) $$
+        Once more this is fairly easy to implement using previously implemented functions.
+        \vspace{-1.5em}
+        \begin{figure}[H]
+            \centering
+            \def\xcircle{ (-1,0) circle (2) }
+            \def\zcircle{ (0,-2) circle (2) }
+            \def\ycircle{ (1,0) circle (2) }
+            \begin{tikzpicture}
+                \scope
+                \clip (-3, -3) rectangle (3, 3) \zcircle{};
+                \fill[blue!15] \xcircle{} \ycircle{};
+                \endscope
+                
+                \scope
+                \clip \xcircle{};
+                \clip \ycircle{};
+                \clip (-3, -3) rectangle (3, 3) \zcircle{};
+                \fill[red!15] \xcircle{} \ycircle{};
+                \endscope
+            
+                \draw
+                \xcircle{} (-2, 1) node [text=black] {$H(\X)$}
+                \zcircle{} (0, -3) node [text=black] {$H(\Z)$}
+                \ycircle{} (2, 1) node [text=black] {$H(\Y)$};
+            \end{tikzpicture}
+            \noskipcaption{Entropy Venn diagram. In \emph{red} $I(\X; \Y \mid \Z)$, in \emph{blue} $\cup$ \emph{red} $H(\X, \Y \mid \Z)$. }
+        \end{figure}
+        
+        \item Using\footnote{All codes and results are available in the file \texttt{entro.py}.} the \texttt{numpy} function \texttt{random.choice} we generated $n$-samples of $\X$ and $\Y$ based on their respective probability distributions. Since $\S$ and $\Z$ are deterministic functions of $\X$ and $\Y$, we calculated their value afterwards.
+        
+        With these samples, we derived several \emph{frequency} (empirical probability) distributions, including the joint frequency distribution of $\X$, $\Y$, $\S$ and $\Z$ as a 4-dimensional matrix. This matrix is especially useful since it allows to quickly determine other frequency distributions trough dimension reduction.
+        
+        Then, we simply applied the implemented functions to obtain the following results :
+        \begin{align*}
+            H(\X) & = \num{1.999} & H(\Y) & = \num{1.743} & H(\S) & = \num{2.592} & H(\Z) & = \num{0.805} \\
+            H(\X, \Y) & = \num{3.742} & H(\X, \S) & = \num{3.742} & H(\Y, \Z) & = \num{2.548} & H(\S, \Z) & = \num{2.865} \\
+            H(\X \mid \Y) & = \num{1.999} & H(\Z \mid \X) & = \num{0.709} & H(\S \mid \X) & = \num{1.742} & H(\S \mid \Z) & = \num{2.060} \\
+            H(\X, \Y \mid S) & = \num{1.150} & H(\S, \Y \mid X) & = \num{1.742} \\
+            I(\X, \Y) & = \num{0.001} & I(\X, \S) & = \num{0.850} & I(\Y, \Z) & = \num{0.001} & I(\S, \Z) & = \num{0.531} \\
+            I(\X, \Y \mid S) & = \num{1.150} & I(\S, \Y \mid X) & = \num{1.742}
+        \end{align*}
+        As one can see, these values are quite close to the theoretical ones. This is certainly due to the fact that we used a quite high (\num{10000}) number of samples. If we were to lower this number, say to $50$, the precision of our estimations would decrease significantly.
+    \end{enumerate}
+    
+    \newpage
+    
+    \section*{Designing informative experiments}
+    
+    \begin{enumerate}[leftmargin=*]
+        \setcounter{enumi}{13}
+        \item Let $\X_1$, $\X_2$ and $\X_3$ denote random variables associated respectively with the three squares of this subgrid. Given rule $(a)$, we know that any tuple $(\X_1, \X_2, \X_3)$ such that $\X_1, \X_2, \X_3 \in \cbk{1, 2, \ldots, 9}$ and $\X_1 \neq \X_2 \neq \X_3$ defines a valid subgrid. Furthermore, we also know that $\X_1 = 4$.
+        
+        A priori, all valid subgrids have the same realisation probability $p$ and all others have a null realisation probability. Therefore,
+        \begin{equation}
+            \sum_{i = 1}^N p = 1
+        \end{equation}
+        with $N$ the number of possible valid subgrids.
+        
+        This number is equal to the number of ways to draw \emph{sequentially} $2$ different objects ($\X_2$ and $\X_3$) among $8$ ($1$ to $9$ but $4$), \emph{i.e.} the \emph{arrangements} of $2$ within $8$.
+        \begin{equation*}
+            N = A_8^2 = \frac{\fact{8}}{\fact{(8 - 2)}} = 8 \cdot 7 = 56
+        \end{equation*}
+        Finally, keeping in mind that only $N$ subgrids have a non-null realisation probability, we compute the entropy $H$\footnote{Actually, the entropy we computed could/should be denoted as $H(subgrid \mid \X_1 = 4)$ which shouldn't be mingled with $H(subgrid \mid \X_1)$.} of this subgrid through its definition :
+        \begin{equation}
+            H(subgrid) = -\sum_i p_i \log_2 p_i = -\sum_{i=1}^{N} p \log_2 p = -\log_2 \frac{1}{N} = \log_2 N = \num{5.8074}
+        \end{equation}
+
+        \item With respect to the previous subgrid, adding the constraint $r_1 = 14$ drastically reduces the number of valid subgrids. Indeed, among the \num{56} previous solutions only those that satisfies the rule $(b)$ are still considered valid.
+        \begin{equation*}
+            \X_1 + \X_2 + \X_3 = r_1 \quad \Rightarrow \quad \X_2 = 10 - \X_3
+        \end{equation*}
+        In this situation, the value of $\X_2$ entirely determines the one of $\X_3$ and vice versa.
+        \begin{equation}
+            H(\X_2 \mid X_3) = H(\X_2 \mid X_3) = 0 \quad \Leftrightarrow \quad H(\X_2) = H(\X_3) = I(\X_2; \X_3)
+        \end{equation}
+        The possible pairs can easily be enumerated by hand :
+        \begin{equation*}
+            (\X_2, \X_3) \in \cbk{(1, 9), (2, 8), (3, 7), (7, 3), (8, 2), (9, 1)}
+        \end{equation*}
+        Here as well, the a priori probability to realize one of the $N = 6$ valid subgrids is uniform.
+
+        Once more, keeping in mind that only $N$ subgrids have a non-null realisation probability, we compute the entropy $H$\footnote{Once again, this could/should be denoted as $H(subgrid \mid \X_1 = 4, r_1 = 14)$. From now on, for the sake of conciseness, the computed entropies will always be those of \emph{this} grid with \emph{these} clues and constraints.} of this subgrid through its definition :
+        \begin{equation}
+            H(subgrid) = -\sum_{i=1}^{N} p \log_2 p = -\log_2 \frac{1}{N} = \log_2 N = \num{2.5850}
+        \end{equation}
+
+        \item As seen above, adding or taking into account a row/column constraint reduces the number of valid (sub)grids. Therefore, it logically reduces the entropy of the whole (sub)grid. It also reduces the entropy of individual squares as their value is restrained to the ones that could produce a valid (sub)grid.
+        
+        For example, in question $15$, the domain of $\X_2$ is restrained because there is some value, correct without constraints, of $\X_2$ such that there is no value of $\X_3$ producing a valid (sub)grid, \emph{e.g.} $5$ and $6$.
+        
+        The extreme case is when there is enough clues and constraints to actually solve deterministically the (sub)grid which means there is no uncertainty. As a consequence, the entropy of such (sub)grid is null.
+
+        \item Under assumption $A$, the entropy of a single square is only determined by $N$ the number of valid values it could take which itself is influenced only by the clues and constraints.
+        
+        For example, $\X_2$ has to be different from $\X_1 = 4$ and $\X_9 = 1$ and smaller or equal than $r_1 - \X_1$ and $c_2$.\footnote{We could have considered $r_1 - \X_1 - 1$ and $c_2 - 2$ as the minimal value of squares is $1$, but, for the sake of simplicity, we didn't. }
+        \begin{align*}
+            \X_2 & \in \cbk{\forall x \in \sbk{1, 9} \mid x \not\in \rbk{\X_1, \X_9}, x \leq r_1 - \X_1, x \leq c_2} \\
+            & \in \cbk{2, 3, 5, 6, 7, 8, 9}
+        \end{align*}
+        In this case $N = 7$ and $H(\X_2) = \log_2 N = \num{2.8074}$. For $\X_3$, $N = 6$ ($9$ is forbidden) and $H(\X_3) = \num{2.5850}$. All other entropies are available in \texttt{fubuki.py}.
+        
+        \begin{rmk}
+            It should be noted that the entropy of squares with a clue is null. Indeed, $H = \log_2 1 = 0$.
+        \end{rmk}
+        
+        \item The entropy of the unsolved grid is the joint entropy of all squares (without the ones with clues).
+        \begin{equation}
+            H(grid) = H(\X_2, \X_3, \ldots, \X_8)
+        \end{equation}
+        But, under assumption $A$, these random variables are considered independent. Therefore, knowing \eqref{eq:independence},
+        \begin{align}
+            H(grid) & = \mathbb{E}_{\X_2, \ldots, \X_8} \rbk{h(P(\X_2, \ldots, \X_8))} \nonumber \\
+            & = \mathbb{E}_{\X_2, \ldots, \X_8} \rbk{h(P(\X_2) \ldots P(\X_8))} \nonumber \\
+            & = \mathbb{E}_{\X_2, \ldots, \X_8} \rbk{h(P(\X_2)) + \ldots + h(P(\X_8))} \nonumber \\
+            & = \mathbb{E}_{\X_2, \ldots, \X_8} \rbk{h(P(\X_2))} + \ldots + \mathbb{E}_{\X_2, \ldots, \X_8} \rbk{h(P(\X_8))} \nonumber \\
+            & = \mathbb{E}_{\X_2} \rbk{h(P(\X_2))} + \ldots + \mathbb{E}_{\X_8} \rbk{h(P(\X_8))} \nonumber \\
+            & = H(\X_2) + \ldots + H(\X_8) \label{eq:entropy_assumption_A}
+        \end{align}
+        But we already know these entropies (knowing $\X_1 = 4$, $\X_9 = 1$, $r_1 = 14$, ...). Thus,
+        \begin{equation}
+            H(grid) = \num{2.8074} + \num{2.5850} + \ldots = \num{18.7619}
+        \end{equation}
+        
+        \item Under assumption $A$, for questions $14$ and $15$, the values of $\X_2$ and $\X_3$ are no longer linked. Automatically, the number of valid subgrids increases, so does the entropy. Indeed, for question $14$, instead of the arrangements of $2$ within $8$, we now have \emph{twice} a draw within $8$ possibilities, \emph{i.e.}
+        \begin{equation*}
+            N = 8^2 = 64
+        \end{equation*}
+        and $H(subgrid) = \log_2 N = \num{6}$. This is also valid for question $15$ as the constraint $r_1 = 14$ doesn't restrain the domain of $\X_2$ and/or $\X_3$ under assumption $A$.
+        
+        Under no assumption, questions 17 and 18 are much harder to answer. Indeed, it is now impossible to compute \emph{separately} the valid values of each square as they influence each other. Therefore, the only way to know the valid values (hence the entropy) of each square is to compute \emph{all} the valid possible grids, \emph{i.e.} to solve the Fubuki.
+        
+        Obviously, without assumption $A$, the number of possible grid has decreased dramatically, so does the entropy of the grid and squares. In fact, for \emph{this} particular grid, there is only one solution (the one of the statement) meaning that, knowing the clues and constraints, one can deterministically find all squares. As a consequence, there is no uncertainty, \emph{i.e.} the entropy of the grid (and squares) is null.
+        
+        However, it doesn't mean that finding the solution(s) is trivial. Indeed, in a very general case, finding all the solutions comes back to enumerating all grids and selecting only the ones that are valid. Depending on the way the enumeration is done the complexity (with respect to the number of empty squares $n$) may vary :
+        
+        \begin{enumerate}[label=\alph*.]
+            \item Without taking rules into account : all combinations of $n$ numbers taking values in a set of size $n$ leads to $n^n$ grids to visit;
+            \item Taking rule $(a)$ into account : all permutations of the $n$ numbers of a set leads to $\fact{n}$ grids to visit.
+        \end{enumerate}
+        
+        As comparison, under assumption $A$, computing the number of valid values (and therefore the entropy) of a square consisted in enumerating all $n$ values for \emph{that} square. Therefore, the computation of the entropy of the whole grid required the order of $n^2$ operations.
+
+        \item As we have seen above, to solve a Fubuki grid, we have to explore the space (or a smartly chosen subset) of all grids in order to the solution(s). However, it doesn't mean that this (sub)space cannot be visited efficiently.
+        
+        Let assume that some omnipotent entity (that feels like sharing its knowledge) knows the current probability distributions associated to the empty squares of the grid. 
+        
+        Lets draw a \emph{guess} for one of the empty squares from its probability distribution. From now on, this guess acts as a clue and therefore modifies the number of possible values of all other squares, which we request to the hypothetical omnipotent entity.
+
+        Performing this guessing operation \emph{recursively}, we either succeed to fill the whole grid, which means we found a solution, or a square hasn't possible values anymore, which means that at least the previous guess is wrong.
+        
+        To avoid this situation as much as possible, each guess should carry the less risk, \emph{i.e.} we should have the most \emph{information} about the chosen square. Therefore, the square that should be filled first (and at each step) should be the one with the \emph{lowest entropy} which we can compute with the probability distributions.
+        
+        However, even with this policy, it is not possible to guarantee good guesses. Therefore, when reaching a dead end, the most recent guess is reverted and another guess is made. This method is called \emph{backtracking} and will always find a solution if there is one.
+        
+        \begin{rmk}
+            A backtracking solver has been implemented in \texttt{fubuki.py} and is used to solve the given grid.
+            
+            Since we don't have access to an omnipotent entity, the probability distribution is assumed uniform over the values that are valid in the sense of the assumption $A$.
+        \end{rmk}
+        
+        \item The wisest choice would be to use the clue to reveal as much \emph{information} about the grid as possible. To do so, we should choose the (empty) square $\Y_1$ that maximizes its \emph{mutual information} with the whole grid.
+        \begin{align*}
+            \Y_1 & = \arg\max_{\X_i} I(grid; \X_i) \\
+            & = \arg\max_{\X_i} H(grid) - H(grid \mid \X_i) \\
+            & = \arg\max_{\X_i} H(grid) - H(grid, \X_i) + H(\X_i)
+        \end{align*}
+        But $\X_i$ being part of the grid, $H(grid, \X_i) = H(grid)$ and
+        \begin{equation}
+            \Y_1 = \arg\max_{\X_i} H(\X_i)
+        \end{equation}
+        Therefore, we should choose to reveal the empty square with the \emph{highest entropy} (which is kindly provided by our omnipotent entity), \emph{i.e.} the one we are the least confident about.
+        
+        \item Here as well the goal is to maximize the information revealed by the clues. Therefore, at each step/reveal $i$, we should select the square $\Y_i$ that maximizes its \emph{mutual information} with the whole grid \emph{knowing all previous clues}.
+        \begin{align}
+            \Y_i & = \arg\max_{\X_j} I(grid; \X_j \mid \Y_1 = y_1, \ldots, \Y_{i - 1} = y_{i - 1}) \nonumber \\
+            & = \arg\max_{\X_j} H(grid \mid \Y_1 = y_1, \ldots, \Y_{i - 1} = y_{i - 1}) - H(grid \mid \X_j, \Y_1 = y_1, \ldots, \Y_{i - 1} = y_{i - 1}) \nonumber \\
+            & = \ldots \nonumber \\
+            & = \arg\max_{\X_j} H(\X_j \mid \Y_1 = y_1, \ldots, \Y_{i - 1} = y_{i - 1})
+        \end{align}
+        Therefore, the strategy is the same at each step and is, once more, to reveal the square with the \emph{highest entropy} knowing all previous clues.
+        
+        \item Here the problem is different. We have to choose a \emph{subset} of $k$ squares to reveal at once. It is therefore this subset $\rbk{\Y_1, \ldots, \Y_k}$ that should maximize its \emph{mutual information} with the whole grid.
+        \begin{align}
+            \Y_1, \ldots, \Y_k & = \arg\max_{\X_i, \X_j, \ldots} I(grid; (\X_i, \X_j, \ldots)) \nonumber \\
+            & = \arg\max_{\X_i, \X_j, \ldots} H(grid) - H(grid \mid \X_i, \X_j, \ldots) \nonumber \\
+            & = \arg\max_{\X_i, \X_j, \ldots} H(grid) - H(grid, \X_i, \X_j, \ldots) + H(\X_i, \X_j, \ldots) \nonumber \\
+            & = \arg\max_{\X_i, \X_j, \ldots} H(\X_i, \X_j, \ldots)
+        \end{align}
+        Thus, the strategy is to reveal the subset of empty squares with the \emph{highest joint entropy}.
+    \end{enumerate}
+    
+    \includepdf[pages=-]{resources/pdf/appendix.pdf}
+\end{document}
