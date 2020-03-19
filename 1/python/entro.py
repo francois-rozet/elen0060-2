@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 ELEN0060-2 - Information and coding theory
 University of Liège
@@ -22,27 +24,34 @@ import numpy as np
 def expectation(X, P):
 	return (X * P).sum()
 
+
 def information(P):
 	return -np.log2(P)
+
 
 def entropy(P_X): # 8
 	P = P_X[P_X != 0]
 	return expectation(information(P), P)
 
+
 def joint_entropy(P_XY): # 9
 	return entropy(P_XY.reshape(-1))
+
 
 def conditional_entropy(P_XY): # 10
 	P_Y = P_XY.sum(axis=0)
 	return joint_entropy(P_XY) - entropy(P_Y)
 
+
 def mutual_information(P_XY): # 11
 	P_X = P_XY.sum(axis=1)
 	return entropy(P_X) - conditional_entropy(P_XY)
 
+
 def cond_joint_entropy(P_XYZ): # 12
 	P_Z = P_XYZ.sum(axis=(0, 1))
 	return joint_entropy(P_XYZ) - entropy(P_Z)
+
 
 def cond_mutual_information(P_XYZ): # 12
 	P_XZ = P_XYZ.sum(axis=1)
@@ -61,7 +70,7 @@ if __name__ == '__main__':
 	P_X = np.array([1/4, 1/4, 1/4, 1/4])
 	Y = np.arange(4, dtype=int)
 	P_Y = np.array([1/2, 1/4, 1/8, 1/8])
-	
+
 	## 1.a. X & Y joint probability distribution
 
 	P_XY = np.outer(P_X, P_Y)
@@ -79,9 +88,9 @@ if __name__ == '__main__':
 			P_S[S == np.add(X[i], Y[j])] += P_XY[i, j]
 			P_Z[Z == np.equal(X[i], Y[j])] += P_XY[i, j]
 
-	print("1. XY joint probability distribution :\n", P_XY)
-	print("1. S marginal probability distribution :\n", P_S)
-	print("1. Z marginal probability distribution :\n", P_Z)
+	print('1. XY joint probability distribution :\n', P_XY)
+	print('1. S marginal probability distribution :\n', P_S)
+	print('1. Z marginal probability distribution :\n', P_Z)
 
 	## 1.c. X, Y, Z & S joint probability distribution
 
@@ -105,32 +114,32 @@ if __name__ == '__main__':
 	## 2. Entropies
 
 	H_X, H_Y, H_S, H_Z = entropy(P_X), entropy(P_Y), entropy(P_S), entropy(P_Z)
-	print("2. Marginal entropies :\n", H_X, H_Y, H_S, H_Z)
+	print('2. Marginal entropies :\n', H_X, H_Y, H_S, H_Z)
 
 	## 3. Joint entropies
 
 	H_XY, H_XS, H_YZ, H_SZ = joint_entropy(P_XY), joint_entropy(P_XS), joint_entropy(P_YZ), joint_entropy(P_SZ)
-	print("3. Joint entropies :\n", H_XY, H_XS, H_YZ, H_SZ)
+	print('3. Joint entropies :\n', H_XY, H_XS, H_YZ, H_SZ)
 
 	## 4. Conditional entropies
 
 	H_X_Y, H_Z_X, H_S_X, H_S_Z = conditional_entropy(P_XY), conditional_entropy(P_XZ.T), conditional_entropy(P_XS.T), conditional_entropy(P_SZ)
-	print("4. Conditional entropies :\n", H_X_Y, H_Z_X, H_S_X, H_S_Z)
+	print('4. Conditional entropies :\n', H_X_Y, H_Z_X, H_S_X, H_S_Z)
 
 	## 5. Conditional joint entropies
 
 	H_XY_S, H_SY_X = cond_joint_entropy(P_XYS), cond_joint_entropy(np.transpose(P_XYS, (2, 1, 0)))
-	print("5. Conditional joint entropies :\n", H_XY_S, H_SY_X)
+	print('5. Conditional joint entropies :\n', H_XY_S, H_SY_X)
 
 	## 6. Mutual informations
 
 	I_XY, I_XS, I_YZ, I_SZ = mutual_information(P_XY), mutual_information(P_XS), mutual_information(P_YZ), mutual_information(P_SZ)
-	print("6. Mutual informations :\n", I_XY, I_XS, I_YZ, I_SZ)
+	print('6. Mutual informations :\n', I_XY, I_XS, I_YZ, I_SZ)
 
 	## 7. Conditional mutual informations
 
 	I_XY_S, I_SY_X = cond_mutual_information(P_XYS), cond_mutual_information(np.transpose(P_XYS, (2, 1, 0)))
-	print("7. Conditional mutual informations :\n", I_XY_S, I_SY_X)
+	print('7. Conditional mutual informations :\n', I_XY_S, I_SY_X)
 
 	# Computer-aided exercises
 
@@ -187,36 +196,36 @@ if __name__ == '__main__':
 
 	f_xys = f_xysz.sum(axis=3)
 
-	print("13.1. XY joint frequence distribution :\n", f_xy)
-	print("13.1. S marginal frequence distribution :\n", f_s)
-	print("13.1. Z marginal frequence distribution :\n", f_z)
+	print('13.1. XY joint frequence distribution :\n', f_xy)
+	print('13.1. S marginal frequence distribution :\n', f_s)
+	print('13.1. Z marginal frequence distribution :\n', f_z)
 
 	## 13.2. Entropies
 
 	h_x, h_y, h_s, h_z = entropy(f_x), entropy(f_y), entropy(f_s), entropy(f_z)
-	print("13.2. Marginal entropies :\n", h_x, h_y, h_s, h_z)
+	print('13.2. Marginal entropies :\n', h_x, h_y, h_s, h_z)
 
 	## 13.3. Joint entropies
 
 	h_xy, h_xs, h_yz, h_sz = joint_entropy(f_xy), joint_entropy(f_xs), joint_entropy(f_yz), joint_entropy(f_sz)
-	print("13.3. Joint entropies :\n", h_xy, h_xs, h_yz, h_sz)
+	print('13.3. Joint entropies :\n', h_xy, h_xs, h_yz, h_sz)
 
 	## 13.4. Conditional entropies
 
 	h_x_y, h_z_x, h_s_x, h_s_z = conditional_entropy(f_xy), conditional_entropy(f_xz.T), conditional_entropy(f_xs.T), conditional_entropy(f_sz)
-	print("13.4. Conditional entropies :\n", h_x_y, h_z_x, h_s_x, h_s_z)
+	print('13.4. Conditional entropies :\n', h_x_y, h_z_x, h_s_x, h_s_z)
 
 	## 13.5. Conditional joint entropies
 
 	h_xy_s, h_sy_x = cond_joint_entropy(f_xys), cond_joint_entropy(np.transpose(f_xys, (2, 1, 0)))
-	print("13.5. Conditional joint entropies :\n", h_xy_s, h_sy_x)
+	print('13.5. Conditional joint entropies :\n', h_xy_s, h_sy_x)
 
 	## 13.6. Mutual informations
 
 	i_xy, i_xs, i_yz, i_sz = mutual_information(f_xy), mutual_information(f_xs), mutual_information(f_yz), mutual_information(f_sz)
-	print("13.6. Mutual informations :\n", i_xy, i_xs, i_yz, i_sz)
+	print('13.6. Mutual informations :\n', i_xy, i_xs, i_yz, i_sz)
 
 	## 13.7. Conditional mutual informations
 
 	i_xy_s, i_sy_x = cond_mutual_information(f_xys), cond_mutual_information(np.transpose(f_xys, (2, 1, 0)))
-	print("13.7. Conditional mutual informations :\n", i_xy_s, i_sy_x)
+	print('13.7. Conditional mutual informations :\n', i_xy_s, i_sy_x)
