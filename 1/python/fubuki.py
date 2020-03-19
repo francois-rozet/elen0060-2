@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 ELEN0060-2 - Information and coding theory
 University of Liège
@@ -48,6 +50,7 @@ def create(row = None, column = None):
 				return aux(clues[:, index[1]], aux(clues[index[0]], values, row[index[0]]), column[index[1]])
 
 	return ruler
+
 
 def solve(grid, domain, ruler):
 	'''Generates all solutions matching the rules for the current grid.'''
@@ -117,8 +120,8 @@ if __name__ == '__main__':
 	N = len(solutions)
 	H = np.log2(N)
 
-	print("14. Number of solutions :\n", N)
-	print("14. Entropy of subgrid :\n", H)
+	print('14. Number of solutions :\n', N)
+	print('14. Entropy of subgrid :\n', H)
 
 	# 15. Entropy of subgrid (a) & (b)
 
@@ -128,8 +131,8 @@ if __name__ == '__main__':
 	N = len(solutions)
 	H = np.log2(N)
 
-	print("15. Number of solutions :\n", N)
-	print("15. Entropy of subgrid :\n", np.log2(N))
+	print('15. Number of solutions :\n', N)
+	print('15. Entropy of subgrid :\n', np.log2(N))
 
 	# 17. Entropy of single square (A)
 
@@ -154,12 +157,12 @@ if __name__ == '__main__':
 
 	H = np.log2(N)
 
-	print("17. Number of solutions of single square(s) :\n", N)
-	print("17. Entropy of single square(s) :\n", H)
+	print('17. Number of solutions of single square(s) :\n', N)
+	print('17. Entropy of single square(s) :\n', H)
 
 	# 18. Entropy of unsolved Fubuki grid (A)
 
-	print("18. Entropy of grid :\n", H.sum())
+	print('18. Entropy of grid :\n', H.sum())
 
 	# 19. Without assumption A
 
@@ -167,6 +170,6 @@ if __name__ == '__main__':
 	N = len(solutions)
 	H = np.log2(N)
 
-	print("19. All solutions :\n", solutions)
-	print("19. Number of solutions :\n", N)
-	print("19. Entropy of grid :\n", H)
+	print('19. All solutions :\n', solutions)
+	print('19. Number of solutions :\n', N)
+	print('19. Entropy of grid :\n', H)

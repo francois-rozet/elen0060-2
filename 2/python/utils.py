@@ -1,63 +1,63 @@
- #!/usr/bin/env python
+#!/usr/bin/env python
+
+"""
+ELEN0060-2 - Information and coding theory
+University of Liège
+Academic year 2019-2020
+
+Project 2 - Utils
+"""
+
+
+###########
+# Imports #
+###########
 
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io.wavfile import read, write
-from scipy.io import loadmat
+from scipy.io import loadmat, wavfile
 
 
-"""
-This function gives the binary representation of value v (dec)
-	using nb bits (0 by default corresponds to the minimal number of
-	bits required to represent v).
+#############
+# Functions #
+#############
 
-	examples:
-	binarize(2)
-	>>> '10'
-
-	binarize(2,nb=8)
-	>>> '00000010'
-
-"""
-def binarize(v, nb=0):
-    if nb == 0:
-        return bin(v)[2:]
-    else:
-        return np.binary_repr(v,width=nb)
-
-# This functions returns the decimal representation of a sequence (str) of bits b
-def bin_to_dec(b):
-    return int(b,2)
-
-# This function loads the text sample
-def load_text_sample():
-	f = open('text.csv', 'r')
-	return f.read()
-
-# This function loads the text sample and outputs the binary version (8-bits representation).
-# If spaces=True, then each byte is separated by a space
-def load_binary_text_sample(spaces=True):
-	f = open('text.csv', 'r')
-	contents = f.read()
-	binary_text = ''
-	for c in contents:
-		if spaces:
-			binary_text = binary_text + " " + binarize(ord(c),nb=8)
-		else:
-			binary_text = binary_text + binarize(ord(c),nb=8)
-	return binary_text[1:]
+def int_to_bin(value, n=0):
+	'''Returns the n-bits binary representation of a decimal value.'''
+	return np.binary_repr(value, width=n)
 
 
-# This function loads the image and returns a matrix of values between [0,255].
-def load_image(show=False):
-	matrix = loadmat('lena512.mat')
-	return np.asarray(matrix)
+def bin_to_int(b):
+	'''Returns the decimal value of a binary representation.'''
+	return int(b, 2)
 
-# This function loads the sound signal (.wav)
-def load_wav():
-	rate, data = read('sound.wav')
-	return rate, data
 
-# This function save the sound signal (.wav)
-def save_wav(filename,rate,data):
-    scipy.io.wavfile.write(filename, rate, data)
+def load(filename):
+	'''Returns the content of a (text) file.'''
+	with open(filename, 'r') as f:
+		return f.read()
+
+
+def str_to_byte(s):
+	'''Returns a string as a byte stream.'''
+	return map(lambda x: int_to_bin(ord(x), 8), s)
+
+
+def load_byte(filename, spaces=True):
+	'''Returns the content of (text) file as bytes.'''
+	inter = ' ' if spaces else ''
+	return inter.join(str_to_byte(load(filename)))
+
+
+def load_mat(filename):
+	'''Loads a MATLAB mat file.'''
+	return loadmat(filename)
+
+
+def load_wav(filename):
+	'''Loads a wav file as a sound signal.'''
+	return wavfile.read(filename)
+
+
+def save_wav(filename, rate, data):
+	'''Encodes a sound signal as a wav file.'''
+	return wavfile.write(filename, rate, data)
