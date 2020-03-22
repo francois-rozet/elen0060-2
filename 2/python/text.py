@@ -80,6 +80,74 @@ def huffman_code(tree):
 	return code
 
 
+def lempel_ziv(stream):
+	'''On-line basic Lempel-Ziv encoder.'''
+
+	# Initialize dictionary
+	code = {}
+	nbits = 0
+	prefix, address = '', 0
+
+	# Until end of input stream
+	for symbol in stream:
+		prefix += symbol
+
+		## Search in dictionary
+		if prefix in code:
+			address = code[prefix]
+			continue
+
+		## Output
+		for x in utils.int_to_bin(address, nbits)[:nbits]:
+			yield x
+		yield symbol
+
+		## Update dictionary
+		code[prefix] = len(code) + 1
+		nbits = len(code).bit_length()
+		prefix, address = '', 0
+
+	# Remaining suffix
+	if prefix:
+		for x in utils.int_to_bin(address, nbits):
+			yield x
+
+
+def lempel_ziv_inv(stream):
+	'''On-line Lempel-Ziv decoder.'''
+
+	# Initialize decoded list
+	code = ['']
+	nbits = 0
+	prefix, address = '', ''
+
+	# Until end of input stream
+	for symbol in stream:
+		if len(address) < nbits:
+			address += symbol
+			continue
+
+		## Search in decoded list
+		if address:
+			prefix = code[utils.bin_to_int(address)]
+
+		## Output
+		for x in prefix:
+			yield x
+		yield symbol
+
+		## Update decoded list
+		nbits = len(code).bit_length()
+		code.append(prefix + symbol)
+		prefix, address = '', ''
+
+	# Remaining suffix
+	if address:
+		prefix = code[utils.bin_to_int(address)]
+		for x in prefix:
+			yield x
+
+
 ###########
 # Classes #
 ###########
@@ -184,3 +252,12 @@ if __name__ == '__main__':
 	## 6. Compression rate
 
 	print('6. Compression rate :\n', np.log2(Q) / expected)
+
+	## 11. Lempel-Ziv
+
+	encoded_byte_text = ''.join(lempel_ziv(byte_text))
+	decoded_byte_text = ''.join(lempel_ziv_inv(encoded_byte_text))
+
+	print('11. Byte text length :\n', len(byte_text))
+	print('11. Encoded byte text length :\n', len(encoded_byte_text))
+	print('11. Decoded byte text length :\n', len(decoded_byte_text))
