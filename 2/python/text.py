@@ -21,6 +21,14 @@ from heapq import heappush, heappop, heapify
 from math import ceil, log2
 
 
+#############
+# Functions #
+#############
+
+def pairstr(x):
+	return str(x[0]) + ':' + str(x[1])
+
+
 ###########
 # Classes #
 ###########
@@ -44,6 +52,155 @@ class PriorityQueue:
 
 	def pop(self):
 		return heappop(self.heap)
+
+
+class Node(dict):
+	def __init__(self, value, parent=None, key=None, suffix=''):
+		self.value = value
+		self.suffix = suffix
+		self.parent = parent
+		self.key = key
+
+	def __str__(self):
+		if self:
+			return '{' + ', '.join(map(pairstr, self.items())) + '}'
+		else:
+			return '(' + str(self.value) + ':' + self.suffix + ')'
+
+	def deepen(self):
+		if self.suffix:
+			new = Node(self.value, self.parent, self.key)
+			self.parent[self.key] = new
+			self.parent = new
+
+			self.key = self.suffix[0]
+			self.suffix = self.suffix[1:]
+			new[self.key] = self
+
+	def grow(self, sequence, value=None):
+		if value is None:
+			if not self:
+				self.suffix += sequence
+				return self
+		else:
+			self.value = value
+
+		if sequence:
+			if sequence[0] in self:
+				self[sequence[0]].deepen()
+				return self[sequence[0]].grow(sequence[1:], self.value)
+			else:
+				self[sequence[0]] = Node(self.value, self, sequence[0], sequence[1:])
+				return self[sequence[0]]
+
+		return self
+
+
+class SlidingSuffixTree:
+	def __init__(self, size=256):
+		self.__size = size
+		self.__root = Node(0)
+		self.__leafs = []
+
+	def __str__(self):
+		return str(self.__root)
+
+	def grow(self, sequence):
+		i, length = 0, len(sequence)
+
+		for i, leaf in enumerate(self.__leafs):
+			if leaf.value <= self.__root.value - self.__size + length:
+				while leaf.parent.value == leaf.value:
+					leaf.clear()
+					leaf = leaf.parent
+				if leaf.key in leaf.parent:
+					del leaf.parent[leaf.key]
+			else:
+				break
+
+		self.__leafs = [leaf.grow(sequence) for leaf in self.__leafs[i:]]
+
+		for i in range(length):
+			if i > length - self.__size:
+				leaf = self.__root.grow(sequence[i:], self.__root.value)
+				self.__leafs.append(leaf)
+			self.__root.value += 1
+
+	def process(self, stream):
+		nodes = [(self.__root, 0)]
+		prefix = ''
+
+		for char in stream:
+			new = []
+
+			for node, i in nodes:
+				if self.__root.value < node.value + len(prefix):
+					if char == prefix[i]:
+						new.append((node, i + 1))
+				elif char in node:
+					new.append((node[char], 0))
+				elif i < len(node.suffix) and char == node.suffix[i]:
+					new.append((node, i + 1))
+
+				if self.__root.value == node.value + len(prefix):
+					if len(prefix) and char == prefix[0]:
+						new.append((node, 1))
+
+			if new:
+				nodes = new
+				prefix += char
+			else:
+				yield self.__root.value - nodes[0][0].value, prefix, char
+				self.grow(prefix + char)
+
+				nodes = [(self.__root, 0)]
+				prefix = ''
+
+		if prefix:
+			yield self.__root.value - nodes[0][0].value, prefix, ''
+
+
+class SlidingWindow:
+	def __init__(self, size=256):
+		self.__size = size
+		self.__window = [None] * self.__size
+		self.__cursor = 0
+
+	def __len__(self):
+		if self.__window[self.__cursor] is None:
+			return self.__cursor
+		else:
+			return self.__size
+
+	def __geti(self, distance):
+		assert distance < self.__size
+
+		i = self.__cursor - distance
+		return i if i >= 0 else i + self.__size
+
+	def __getitem__(self, distance):
+		return self.__window[self.__geti(distance)]
+
+	def slice(self, distance, length):
+		i = self.__geti(distance)
+
+		affix = [None] * length
+
+		k = 0
+		for j in range(length):
+			if (i + k) % self.__size == self.__cursor:
+				k = 0
+
+			affix[j] = self.__window[(i + k) % self.__size]
+			k += 1
+
+		return affix
+
+	def push(self, affix):
+		for x in affix:
+			self.__window[self.__cursor] = x
+			self.__cursor += 1
+			self.__cursor %= self.__size
 
 
 class Huffman:
@@ -121,7 +278,7 @@ class Huffman:
 				subtree = tree
 
 
-class LempelZiv:
+class LZ78:
 	@staticmethod
 	def encode(stream, size=None):
 		'''On-line basic LZ78 encoder.'''
@@ -140,8 +297,7 @@ class LempelZiv:
 				continue
 
 			## Output
-			yield utils.int_to_bin(index, nbits)[:nbits]
-			yield symbol
+			yield utils.int_to_bin(index, nbits)[:nbits] + symbol
 
 			## New dictionary entry
 			if size is None or len(dictionary) < size:
@@ -152,8 +308,7 @@ class LempelZiv:
 			index = 0
 
 		# Remaining suffix
-		for bit in utils.int_to_bin(index, nbits):
-			yield bit
+		yield utils.int_to_bin(index, nbits)
 
 	@staticmethod
 	def decode(stream, size=None):
@@ -173,8 +328,7 @@ class LempelZiv:
 				continue
 
 			## Output
-			yield LempelZiv.revert(dictionary, index)
-			yield bit
+			yield LZ78.revert(dictionary, index) + bit
 
 			## Update dictionary
 			if size is None or len(dictionary) < size:
@@ -185,7 +339,7 @@ class LempelZiv:
 			index = 0
 
 		# Remaining suffix
-		yield LempelZiv.revert(dictionary, index)
+		yield LZ78.revert(dictionary, index)
 
 	@staticmethod
 	def revert(dictionary, index):
@@ -194,6 +348,33 @@ class LempelZiv:
 			index, symbol = dictionary[index]
 			string += symbol
 		return string[::-1]
+
+
+class LZ77:
+	@staticmethod
+	def encode(stream, size=256):
+		'''On-line basic LZ77 encoder.'''
+
+		# Initialize sliding window
+		window = SlidingSuffixTree(size)
+
+		# Until end of input stream
+		for distance, prefix, bit in window.process(stream):
+			yield distance, len(prefix), bit
+
+	@staticmethod
+	def decode(stream, size=256):
+		'''On-line basic LZ77 decoder.'''
+
+		# Initialize sliding window
+		window = SlidingWindow(size)
+
+		# Until end of input stream
+		for distance, length, bit in stream:
+			prefix = ''.join(window.slice(distance, length))
+
+			yield prefix + bit
+			window.push(prefix + bit)
 
 
 ########
@@ -252,9 +433,14 @@ if __name__ == '__main__':
 
 	## 11. Lempel-Ziv
 
-	encoded_byte_text = ''.join(LempelZiv.encode(byte_text))
-	decoded_byte_text = ''.join(LempelZiv.decode(encoded_byte_text))
-
 	print('11. Byte text length :\n', len(byte_text))
-	print('11. Encoded byte text length :\n', len(encoded_byte_text))
-	print('11. Decoded byte text length :\n', len(decoded_byte_text))
+
+	encoded_byte_text = ''.join(LZ78.encode(byte_text))
+	decoded_byte_text = ''.join(LZ78.decode(encoded_byte_text))
+
+	print('11. LZ78 encoded byte text length :\n', len(encoded_byte_text))
+	print('11. LZ78 decoded byte text length :\n', len(decoded_byte_text))
+
+	decoded_byte_text = ''.join(LZ77.decode(LZ77.encode(byte_text)))
+
+	print('11. LZ77 decoded byte text length :\n', len(decoded_byte_text))
