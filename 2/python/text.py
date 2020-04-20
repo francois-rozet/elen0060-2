@@ -54,112 +54,6 @@ class PriorityQueue:
 		return heappop(self.heap)
 
 
-class Node(dict):
-	def __init__(self, value, parent=None, key=None, suffix=''):
-		self.value = value
-		self.suffix = suffix
-		self.parent = parent
-		self.key = key
-
-	def __str__(self):
-		if self:
-			return '{' + ', '.join(map(pairstr, self.items())) + '}'
-		else:
-			return '(' + str(self.value) + ':' + self.suffix + ')'
-
-	def deepen(self):
-		if self.suffix:
-			new = Node(self.value, self.parent, self.key)
-			self.parent[self.key] = new
-			self.parent = new
-
-			self.key = self.suffix[0]
-			self.suffix = self.suffix[1:]
-			new[self.key] = self
-
-	def grow(self, sequence, value=None):
-		if value is None:
-			if not self:
-				self.suffix += sequence
-				return self
-		else:
-			self.value = value
-
-		if sequence:
-			if sequence[0] in self:
-				self[sequence[0]].deepen()
-				return self[sequence[0]].grow(sequence[1:], self.value)
-			else:
-				self[sequence[0]] = Node(self.value, self, sequence[0], sequence[1:])
-				return self[sequence[0]]
-
-		return self
-
-
-class SlidingSuffixTree:
-	def __init__(self, size=256):
-		self.__size = size
-		self.__root = Node(0)
-		self.__leafs = []
-
-	def __str__(self):
-		return str(self.__root)
-
-	def grow(self, sequence):
-		i, length = 0, len(sequence)
-
-		for i, leaf in enumerate(self.__leafs):
-			if leaf.value <= self.__root.value - self.__size + length:
-				while leaf.parent.value == leaf.value:
-					leaf.clear()
-					leaf = leaf.parent
-				if leaf.key in leaf.parent:
-					del leaf.parent[leaf.key]
-			else:
-				break
-
-		self.__leafs = [leaf.grow(sequence) for leaf in self.__leafs[i:]]
-
-		for i in range(length):
-			if i > length - self.__size:
-				leaf = self.__root.grow(sequence[i:], self.__root.value)
-				self.__leafs.append(leaf)
-			self.__root.value += 1
-
-	def process(self, stream):
-		nodes = [(self.__root, 0)]
-		prefix = ''
-
-		for char in stream:
-			new = []
-
-			for node, i in nodes:
-				if self.__root.value < node.value + len(prefix):
-					if char == prefix[i]:
-						new.append((node, i + 1))
-				elif char in node:
-					new.append((node[char], 0))
-				elif i < len(node.suffix) and char == node.suffix[i]:
-					new.append((node, i + 1))
-
-				if self.__root.value == node.value + len(prefix):
-					if len(prefix) and char == prefix[0]:
-						new.append((node, 1))
-
-			if new:
-				nodes = new
-				prefix += char
-			else:
-				yield self.__root.value - nodes[0][0].value, prefix, char
-				self.grow(prefix + char)
-
-				nodes = [(self.__root, 0)]
-				prefix = ''
-
-		if prefix:
-			yield self.__root.value - nodes[0][0].value, prefix, ''
-
-
 class SlidingWindow:
 	def __init__(self, size=256):
 		self.__size = size
@@ -285,7 +179,6 @@ class LZ78:
 
 		# Initialize dictionary
 		dictionary = {}
-		nbits = 0
 		next_index = 1
 		index = 0
 
@@ -297,18 +190,17 @@ class LZ78:
 				continue
 
 			## Output
-			yield utils.int_to_bin(index, nbits)[:nbits] + symbol
+			yield index, symbol
 
 			## New dictionary entry
 			if size is None or len(dictionary) < size:
 				dictionary[(index, symbol)] = next_index
 				next_index += 1
 
-			nbits = len(dictionary).bit_length()
 			index = 0
 
 		# Remaining suffix
-		yield utils.int_to_bin(index, nbits)
+		yield index, ''
 
 	@staticmethod
 	def decode(stream, size=None):
@@ -316,65 +208,34 @@ class LZ78:
 
 		# Initialize dictionary
 		dictionary = {}
-		nbits = 0
 		next_index = 1
 		index = 0
 
 		# Until end of input stream
-		for bit in stream:
-			if nbits > 0:
-				index = 2 * index + int(bit)
-				nbits -= 1
-				continue
+		for index, symbol in stream:
+			## Build prefix with dictionary
+			prefix = LZ78.build(dictionary, index)
 
 			## Output
-			yield LZ78.revert(dictionary, index) + bit
+			yield prefix + [symbol]
 
 			## Update dictionary
 			if size is None or len(dictionary) < size:
-				dictionary[next_index] = (index, bit)
+				dictionary[next_index] = (index, symbol)
 				next_index += 1
 
-			nbits = len(dictionary).bit_length()
 			index = 0
 
 		# Remaining suffix
-		yield LZ78.revert(dictionary, index)
+		yield LZ78.build(dictionary, index)
 
 	@staticmethod
-	def revert(dictionary, index):
-		string = ''
+	def build(dictionary, index):
+		prefix = []
 		while index > 0:
 			index, symbol = dictionary[index]
-			string += symbol
-		return string[::-1]
-
-
-class LZ77:
-	@staticmethod
-	def encode(stream, size=256):
-		'''On-line basic LZ77 encoder.'''
-
-		# Initialize sliding window
-		window = SlidingSuffixTree(size)
-
-		# Until end of input stream
-		for distance, prefix, bit in window.process(stream):
-			yield distance, len(prefix), bit
-
-	@staticmethod
-	def decode(stream, size=256):
-		'''On-line basic LZ77 decoder.'''
-
-		# Initialize sliding window
-		window = SlidingWindow(size)
-
-		# Until end of input stream
-		for distance, length, bit in stream:
-			prefix = ''.join(window.slice(distance, length))
-
-			yield prefix + bit
-			window.push(prefix + bit)
+			prefix.append(symbol)
+		return prefix[::-1]
 
 
 ########
@@ -410,11 +271,15 @@ if __name__ == '__main__':
 
 	q = 2
 
-	code = Huffman.code(Huffman.tree(S, P))
+	tree = Huffman.tree(S, P)
+	code = Huffman.code(tree)
 	encoded_text = ''.join(Huffman.encode(code, text))
+	decoded_text = ''.join(Huffman.decode(tree, encoded_text))
 
 	print('4. Huffman code :', *code.items(), sep='\n')
+	print('4. Text length :\n', len(text))
 	print('4. Encoded text length :\n', len(encoded_text))
+	print('4. Decoded text length :\n', len(decoded_text))
 	print('4. Empirical average length :\n', len(encoded_text) / len(text))
 
 	## 5. Huffman expected length
@@ -435,12 +300,14 @@ if __name__ == '__main__':
 
 	print('11. Byte text length :\n', len(byte_text))
 
-	encoded_byte_text = ''.join(LZ78.encode(byte_text))
-	decoded_byte_text = ''.join(LZ78.decode(encoded_byte_text))
+	encoded_byte_text = list(LZ78.encode(byte_text))
 
-	print('11. LZ78 encoded byte text length :\n', len(encoded_byte_text))
+	encoded_len = sum(
+		i.bit_length() + len(symbol)
+		for i, (index, symbol) in enumerate(encoded_byte_text)
+	)
+
+	decoded_byte_text = ''.join(''.join(x) for x in LZ78.decode(encoded_byte_text))
+
+	print('11. LZ78 encoded byte text length :\n', encoded_len)
 	print('11. LZ78 decoded byte text length :\n', len(decoded_byte_text))
-
-	decoded_byte_text = ''.join(LZ77.decode(LZ77.encode(byte_text)))
-
-	print('11. LZ77 decoded byte text length :\n', len(decoded_byte_text))
