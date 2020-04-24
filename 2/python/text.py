@@ -281,6 +281,7 @@ if __name__ == '__main__':
 	print('4. Encoded text length :\n', len(encoded_text))
 	print('4. Decoded text length :\n', len(decoded_text))
 	print('4. Empirical average length :\n', len(encoded_text) / len(text))
+	print('4. Kraft inequality :', sum(q ** -len(x) for x in code.values()))
 
 	## 5. Huffman expected length
 
