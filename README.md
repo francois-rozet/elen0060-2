@@ -10,3 +10,8 @@ These projects have been developed using [Python](https://www.python.org/).
 
 * **Maxime Meurisse** - [meurissemax](https://github.com/meurissemax)
 * **François Rozet** - [francois-rozet](https://github.com/francois-rozet)
+
+## Scores
+
+* Project 1 received the score of 19/20.
+* Project 2 received the score of 19/20.
